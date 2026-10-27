@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Assignment Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --muted: #718096;
+      --accent: #4f46e5;
+      --accent-light: #ede9fe;
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --yellow: #d97706;
+      --yellow-light: #fef3c7;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+      --shadow-lg: 0 8px 30px rgba(0,0,0,.12);
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--accent);
+      color: #fff;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(79,70,229,.35);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; letter-spacing: -.3px; }
+    .logo svg { width: 28px; height: 28px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .badge-date { font-size: 13px; opacity: .85; }
+
+    /* ── MAIN CONTAINER ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ── SECTION TITLE ── */
+    .section-title { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 18px; }
+    .section-sub  { font-size: 13px; color: var(--muted); margin-top: -14px; margin-bottom: 18px; }
+
+    /* ── SUMMARY CARDS ── */
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 32px; }
+    @media(max-width:640px){ .cards { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .card-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .card-icon svg { width: 26px; height: 26px; }
+    .card-icon.total    { background: var(--accent-light); color: var(--accent); }
+    .card-icon.submitted{ background: var(--green-light);  color: var(--green);  }
+    .card-icon.pending  { background: var(--red-light);    color: var(--red);    }
+    .card-body { flex: 1; min-width: 0; }
+    .card-label { font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+    .card-value { font-size: 2rem; font-weight: 800; line-height: 1.1; margin-top: 2px; }
+    .card-value.total     { color: var(--accent); }
+    .card-value.submitted { color: var(--green);  }
+    .card-value.pending   { color: var(--red);    }
+    .card-pct  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── TOOLBAR ── */
+    .toolbar { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 16px; height: 16px; pointer-events: none; }
+    .search-wrap input {
+      width: 100%; padding: 9px 12px 9px 34px;
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 14px; background: var(--surface); color: var(--text);
+      transition: border-color .15s;
+      outline: none;
+    }
+    .search-wrap input:focus { border-color: var(--accent); }
+
+    select {
+      padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 14px; background: var(--surface); color: var(--text);
+      cursor: pointer; outline: none; transition: border-color .15s;
+    }
+    select:focus { border-color: var(--accent); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 9px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: background .15s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-ghost { background: var(--surface); color: var(--text); border: 1.5px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn svg { width: 16px; height: 16px; }
+
+    /* ── TABLE ── */
+    .table-wrap { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .table-title-text { font-weight: 700; font-size: 15px; }
+    .table-count { font-size: 13px; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 11px 16px; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
+      background: #fafafa; border-bottom: 1px solid var(--border);
+    }
+    td { padding: 13px 16px; font-size: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background .1s; }
+    tbody tr:hover { background: #fafbff; }
+
+    @media(max-width:700px){
+      .col-due, .col-assignment { display: none; }
+    }
+
+    /* ── STATUS BADGE ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: .3px;
+    }
+    .badge-submitted { background: var(--green-light); color: var(--green); }
+    .badge-pending   { background: var(--red-light);   color: var(--red);   }
+    .badge svg { width: 11px; height: 11px; }
+
+    /* ── AVATAR ── */
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+
+    .student-cell { display: flex; align-items: center; gap: 10px; }
+    .student-info { display: flex; flex-direction: column; }
+    .student-name { font-weight: 600; }
+    .student-id   { font-size: 12px; color: var(--muted); }
+
+    /* ── ACTION BUTTONS ── */
+    .action-group { display: flex; gap: 6px; }
+    .btn-icon {
+      width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border);
+      background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .12s, border-color .12s; color: var(--muted);
+    }
+    .btn-icon svg { width: 14px; height: 14px; }
+    .btn-icon:hover { background: var(--bg); border-color: #cbd5e0; color: var(--text); }
+    .btn-icon.toggle-btn:hover { background: var(--green-light); border-color: var(--green); color: var(--green); }
+    .btn-icon.delete-btn:hover { background: var(--red-light); border-color: var(--red); color: var(--red); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { padding: 56px 24px; text-align: center; color: var(--muted); }
+    .empty-state svg { width: 52px; height: 52px; opacity: .35; margin-bottom: 14px; }
+    .empty-state p { font-size: 15px; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border-radius: 16px;
+      box-shadow: var(--shadow-lg); width: 100%; max-width: 480px;
+      padding: 28px; transform: translateY(16px); transition: transform .2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .modal-title  { font-size: 1.1rem; font-weight: 700; }
+    .modal-close  { width: 32px; height: 32px; border-radius: 8px; background: var(--bg); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+    .modal-close svg { width: 16px; height: 16px; }
+    .modal-close:hover { background: var(--border); color: var(--text); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:480px){ .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 600; color: var(--muted); }
+    input[type="text"], input[type="date"], select.form-select {
+      padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 14px; color: var(--text); background: var(--surface);
+      outline: none; transition: border-color .15s; width: 100%;
+    }
+    input[type="text"]:focus, input[type="date"]:focus, select.form-select:focus { border-color: var(--accent); }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap { margin-top: 6px; }
+    .progress-bar-bg { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 99px; background: var(--green); transition: width .4s ease; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: #1a202c; color: #fff; padding: 11px 22px; border-radius: 99px;
+      font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lg);
+      transition: transform .3s ease; z-index: 999; white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    </svg>
+    My Assignment Tracker
+  </div>
+  <div class="header-right">
+    <span class="badge-date" id="today-date"></span>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main>
+  <p class="section-title">Dashboard Overview</p>
+  <p class="section-sub">Track student assignment submissions at a glance.</p>
+
+  <!-- SUMMARY CARDS -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon total">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="card-label">Total Students</div>
+        <div class="card-value total" id="cnt-total">0</div>
+        <div class="card-pct" id="pct-total">All enrolled students</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-icon submitted">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="card-label">Submitted</div>
+        <div class="card-value submitted" id="cnt-submitted">0</div>
+        <div class="progress-wrap">
+          <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+        </div>
+        <div class="card-pct" id="pct-submitted">0% submission rate</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-icon pending">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="card-label">Not Submitted</div>
+        <div class="card-value pending" id="cnt-pending">0</div>
+        <div class="card-pct" id="pct-pending">0% pending</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search-input" placeholder="Search by name or assignment…" oninput="renderTable()" />
+    </div>
+    <select id="filter-status" onchange="renderTable()">
+      <option value="all">All Statuses</option>
+      <option value="submitted">Submitted</option>
+      <option value="pending">Not Submitted</option>
+    </select>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Student
+    </button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <div>
+        <span class="table-title-text">Student Assignments</span>
+        <span class="table-count" id="row-count"></span>
+      </div>
+      <button class="btn btn-ghost" onclick="exportCSV()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th class="col-assignment">Assignment</th>
+            <th class="col-due">Due Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ── ADD / EDIT MODAL ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Add Student</span>
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="f-name">Student Name *</label>
+        <input type="text" id="f-name" placeholder="e.g. Alice Johnson" />
+      </div>
+      <div class="form-group">
+        <label for="f-id">Student ID</label>
+        <input type="text" id="f-id" placeholder="e.g. STU-001" />
+      </div>
+      <div class="form-group full">
+        <label for="f-assignment">Assignment Title *</label>
+        <input type="text" id="f-assignment" placeholder="e.g. Chapter 3 Report" />
+      </div>
+      <div class="form-group">
+        <label for="f-due">Due Date</label>
+        <input type="date" id="f-due" />
+      </div>
+      <div class="form-group">
+        <label for="f-status">Status</label>
+        <select id="f-status" class="form-select">
+          <option value="pending">Not Submitted</option>
+          <option value="submitted">Submitted</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────────────────────────
+  const COLORS = ['#4f46e5','#16a34a','#dc2626','#d97706','#0891b2','#7c3aed','#db2777','#059669'];
+  let editId = null;
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem('mat_records') || '[]'); } catch { return []; }
+  }
+  function save(data) { localStorage.setItem('mat_records', JSON.stringify(data)); }
+
+  function seed() {
+    if (load().length) return;
+    const sample = [
+      { id: uid(), name: 'Alice Johnson',   sid: 'STU-001', assignment: 'Chapter 3 Report',   due: '2025-07-20', status: 'submitted' },
+      { id: uid(), name: 'Bob Mensah',       sid: 'STU-002', assignment: 'Math Problem Set',   due: '2025-07-18', status: 'pending'   },
+      { id: uid(), name: 'Cynthia Osei',     sid: 'STU-003', assignment: 'Lab Write-up',        due: '2025-07-22', status: 'submitted' },
+      { id: uid(), name: 'David Asante',     sid: 'STU-004', assignment: 'History Essay',       due: '2025-07-15', status: 'pending'   },
+      { id: uid(), name: 'Eva Boateng',      sid: 'STU-005', assignment: 'Chapter 3 Report',   due: '2025-07-20', status: 'submitted' },
+      { id: uid(), name: 'Frank Adjei',      sid: 'STU-006', assignment: 'Science Quiz',        due: '2025-07-19', status: 'pending'   },
+      { id: uid(), name: 'Grace Owusu',      sid: 'STU-007', assignment: 'Math Problem Set',   due: '2025-07-18', status: 'submitted' },
+      { id: uid(), name: 'Henry Darkwa',     sid: 'STU-008', assignment: 'Lab Write-up',        due: '2025-07-22', status: 'submitted' },
+    ];
+    save(sample);
+  }
+
+  function uid() { return Math.random().toString(36).slice(2, 9); }
+
+  function initials(name) {
+    return name.trim().split(' ').slice(0,2).map(w => w[0].toUpperCase()).join('');
+  }
+  function avatarColor(name) {
+    let h = 0; for (let c of name) h = (h * 31 + c.charCodeAt(0)) % COLORS.length;
+    return COLORS[h];
+  }
+
+  // ── DATE ──────────────────────────────────────────────────────────────────
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // ── CARDS ─────────────────────────────────────────────────────────────────
+  function updateCards() {
+    const all = load();
+    const sub = all.filter(r => r.status === 'submitted').length;
+    const pend = all.length - sub;
+    const pct  = all.length ? Math.round(sub / all.length * 100) : 0;
+    document.getElementById('cnt-total').textContent     = all.length;
+    document.getElementById('cnt-submitted').textContent = sub;
+    document.getElementById('cnt-pending').textContent   = pend;
+    document.getElementById('pct-submitted').textContent = `${pct}% submission rate`;
+    document.getElementById('pct-pending').textContent   = all.length ? `${100 - pct}% pending` : '0% pending';
+    document.getElementById('progress-bar').style.width  = pct + '%';
+  }
+
+  // ── TABLE ─────────────────────────────────────────────────────────────────
+  function renderTable() {
+    const all    = load();
+    const q      = document.getElementById('search-input').value.toLowerCase();
+    const filter = document.getElementById('filter-status').value;
+
+    const rows = all.filter(r => {
+      const matchQ = !q || r.name.toLowerCase().includes(q) || r.assignment.toLowerCase().includes(q) || (r.sid||'').toLowerCase().includes(q);
+      const matchF = filter === 'all' || r.status === filter;
+      return matchQ && matchF;
+    });
+
+    const cnt = document.getElementById('row-count');
+    cnt.textContent = rows.length !== all.length ? ` — ${rows.length} of ${all.length}` : ` — ${all.length} record${all.length !== 1 ? 's' : ''}`;
+
+    const tbody = document.getElementById('table-body');
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+        <p>No records found. Click <strong>Add Student</strong> to get started.</p>
+      </div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map((r, i) => {
+      const color = avatarColor(r.name);
+      const isSubmitted = r.status === 'submitted';
+      const badge = isSubmitted
+        ? `<span class="badge badge-submitted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Submitted</span>`
+        : `<span class="badge badge-pending"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Not Submitted</span>`;
+      const toggleTitle = isSubmitted ? 'Mark as Not Submitted' : 'Mark as Submitted';
+      const toggleIcon  = isSubmitted
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      const dueStr = r.due ? new Date(r.due + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+
+      return `<tr>
+        <td style="color:var(--muted);font-size:13px">${i+1}</td>
+        <td>
+          <div class="student-cell">
+            <div class="avatar" style="background:${color}">${initials(r.name)}</div>
+            <div class="student-info">
+              <span class="student-name">${escHtml(r.name)}</span>
+              <span class="student-id">${escHtml(r.sid||'—')}</span>
+            </div>
+          </div>
+        </td>
+        <td class="col-assignment">${escHtml(r.assignment)}</td>
+        <td class="col-due">${dueStr}</td>
+        <td>${badge}</td>
+        <td>
+          <div class="action-group">
+            <button class="btn-icon toggle-btn" title="${toggleTitle}" onclick="toggleStatus('${r.id}')">${toggleIcon}</button>
+            <button class="btn-icon" title="Edit" onclick="openEdit('${r.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn-icon delete-btn" title="Delete" onclick="deleteRecord('${r.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── ACTIONS ───────────────────────────────────────────────────────────────
+  function toggleStatus(id) {
+    const data = load();
+    const rec  = data.find(r => r.id === id);
+    if (!rec) return;
+    rec.status = rec.status === 'submitted' ? 'pending' : 'submitted';
+    save(data); refresh();
+    showToast(rec.status === 'submitted' ? '✅ Marked as Submitted' : '⚠️ Marked as Not Submitted');
+  }
+
+  function deleteRecord(id) {
+    if (!confirm('Delete this record? This cannot be undone.')) return;
+    const data = load().filter(r => r.id !== id);
+    save(data); refresh();
+    showToast('🗑️ Record deleted');
+  }
+
+  // ── MODAL ─────────────────────────────────────────────────────────────────
+  function openModal() {
+    editId = null;
+    document.getElementById('modal-title').textContent = 'Add Student';
+    document.getElementById('f-name').value       = '';
+    document.getElementById('f-id').value         = '';
+    document.getElementById('f-assignment').value = '';
+    document.getElementById('f-due').value         = '';
+    document.getElementById('f-status').value      = 'pending';
+    document.getElementById('modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-name').focus(), 120);
+  }
+
+  function openEdit(id) {
+    const rec = load().find(r => r.id === id);
+    if (!rec) return;
+    editId = id;
+    document.getElementById('modal-title').textContent = 'Edit Record';
+    document.getElementById('f-name').value       = rec.name;
+    document.getElementById('f-id').value         = rec.sid || '';
+    document.getElementById('f-assignment').value = rec.assignment;
+    document.getElementById('f-due').value         = rec.due || '';
+    document.getElementById('f-status').value      = rec.status;
+    document.getElementById('modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-name').focus(), 120);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  function saveRecord() {
+    const name       = document.getElementById('f-name').value.trim();
+    const sid        = document.getElementById('f-id').value.trim();
+    const assignment = document.getElementById('f-assignment').value.trim();
+    const due        = document.getElementById('f-due').value;
+    const status     = document.getElementById('f-status').value;
+
+    if (!name) { alert('Student name is required.'); document.getElementById('f-name').focus(); return; }
+    if (!assignment) { alert('Assignment title is required.'); document.getElementById('f-assignment').focus(); return; }
+
+    const data = load();
+    if (editId) {
+      const rec = data.find(r => r.id === editId);
+      if (rec) Object.assign(rec, { name, sid, assignment, due, status });
+      showToast('✏️ Record updated');
+    } else {
+      data.push({ id: uid(), name, sid, assignment, due, status });
+      showToast('✅ Student added');
+    }
+    save(data); closeModal(); refresh();
+  }
+
+  // ── EXPORT ────────────────────────────────────────────────────────────────
+  function exportCSV() {
+    const data = load();
+    if (!data.length) { showToast('No data to export'); return; }
+    const header = ['#','Student Name','Student ID','Assignment','Due Date','Status'];
+    const rows   = data.map((r,i) => [
+      i+1, r.name, r.sid||'', r.assignment, r.due||'', r.status === 'submitted' ? 'Submitted' : 'Not Submitted'
+    ]);
+    const csv = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a   = document.createElement('a');
+    a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'assignment-tracker.csv';
+    a.click();
+    showToast('📥 CSV exported');
+  }
+
+  // ── TOAST ─────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  // ── KEYBOARD ──────────────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && document.getElementById('modal-overlay').classList.contains('open')) saveRecord();
+  });
+
+  // ── INIT ──────────────────────────────────────────────────────────────────
+  function refresh() { updateCards(); renderTable(); }
+  seed();
+  refresh();
+</script>
+</body>
+</html>
